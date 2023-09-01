@@ -46,22 +46,34 @@ public class CategoryController {
                 .map(category -> ResponseEntity.ok().body(categoryMapper.categoryToItemDTO(category)))
                 .orElse(ResponseEntity.notFound().build());
     }
-    @PutMapping("/category/{id}")
-    public ResponseEntity<CategoryItemDTO> updateCategory(@PathVariable int id, @RequestBody CategoryUpdateDTO dto) {
+    @PutMapping(value = "/category/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CategoryItemDTO> updateCategory(@PathVariable int id, @ModelAttribute CategoryUpdateDTO dto) {
         Optional<CategoryEntity> categoryOptional = categoryRepository.findById(id);
-        return categoryOptional.map(category -> {
+        if (categoryOptional.isPresent()) {
+            var category = categoryOptional.get();
+            if(category.getImage()!=null && !category.getImage().isEmpty()) {
+                storageService.removeFile(category.getImage());
+            }
+            String fileName = storageService.saveMultipartFile(dto.getImage());
             category.setName(dto.getName());
             category.setDescription(dto.getDescription());
-            category.setImage(dto.getImage());
+            category.setImage(fileName);
             categoryRepository.save(category);
             return ResponseEntity.ok().body(categoryMapper.categoryToItemDTO(category));
-        }).orElse(ResponseEntity.notFound().build());
+        }
+        else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/category/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable int id) {
         Optional<CategoryEntity> categoryOptional = categoryRepository.findById(id);
         if (categoryOptional.isPresent()) {
+            var category = categoryOptional.get();
+            if(category.getImage()!=null && !category.getImage().isEmpty()) {
+                storageService.removeFile(category.getImage());
+            }
             categoryRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         } else {
