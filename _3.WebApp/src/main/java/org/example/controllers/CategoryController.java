@@ -56,7 +56,7 @@ public class CategoryController {
             if(category.getImage()!=null && !category.getImage().isEmpty()) {
                 storageService.removeFile(category.getImage());
             }
-            String fileName = storageService.saveMultipartFile(dto.getImage());
+            String fileName = storageService.saveThumbnailator(dto.getImage(), FileSaveFormat.WEBP);
             category.setName(dto.getName());
             category.setDescription(dto.getDescription());
             category.setImage(fileName);
