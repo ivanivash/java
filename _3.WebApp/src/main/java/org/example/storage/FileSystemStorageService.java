@@ -1,5 +1,7 @@
 package org.example.storage;
 
+import net.coobird.thumbnailator.Thumbnailator;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -144,5 +146,27 @@ public class FileSystemStorageService implements StorageService {
             throw new StorageException("Проблема перетворення та збереження base64", e);
         }
     }
+
+    @Override
+        public String saveThumbnailator(MultipartFile file, FileSaveFormat format) {
+            try {
+                String extension = format.name().toLowerCase();
+                UUID uuid = UUID.randomUUID();
+                String randomFileName = uuid.toString() + "." + extension; //робимо ім'я файліка: унікальне ім'я + розширення
+                int[] imageSize = {32, 150, 300, 600, 1200}; // масив розмірів фотографій
+                BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
+                for (int size : imageSize) { // в циклі створюємо фотки кожного розміру
+                    String fileOutputSave = rootLocation.toString() + "/" + size + "_" + randomFileName; //створюємо папку де фотка буде зберігатися
+                ByteArrayOutputStream bout = new ByteArrayOutputStream();
+                    Thumbnails.of(bufferedImage)
+                            .size(size, size)
+                            .outputFormat(extension)
+                            .toFile(fileOutputSave);
+                }
+                return randomFileName;
+            } catch (IOException e) {
+                throw new StorageException("Проблема перетворення та збереження base64", e);
+            }
+        }
 }
 
