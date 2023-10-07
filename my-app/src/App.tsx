@@ -5,7 +5,9 @@ import CategoryListPage from "./components/category/list/CategoryListPage.tsx";
 import CategoryCreatePage from './components/category/create/CategoryCreatePage.tsx';
 import ProductCreatePage from './components/product/creat/ProductCreatePage.tsx';
 import LoginPage from './components/auth/login/LoginPage.tsx';
-
+//import {lazy} from "yup";
+// треба добавити багато code із GitHub
+//const Register = lazy(() => import('./components/auth/register/RegisterPage.tsx'));
 function App() {
 
   return (
