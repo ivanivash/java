@@ -3,24 +3,29 @@ import InputGroup from "../../../common/InputGroup.tsx";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
-    AuthUserActionType,
     ILogin,
     ILoginResult,
-    IUser,
 } from "../../../entities/Auth.ts";
 import http_common from "../../../http_common.ts";
-import jwtDecode from "jwt-decode";
 import { useState } from "react";
 import * as Yup from "yup";
+import {useGoogleReCaptcha} from "react-google-recaptcha-v3";
+import {LoginUserAction} from "../../../store/actions/AuthActions.ts";
+import GoogleAuth from "../GoogleAuth";
+import {GoogleOAuthProvider} from "@react-oauth/google";
+
 
 function LoginPage() {
+    const { executeRecaptcha } = useGoogleReCaptcha();
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const initialValues: ILogin = {
         email: "",
         password: "",
+        recaptchaToken: ""
     };
+
 
     const loginSchema = Yup.object().shape({
         email: Yup.string().required("Email is required").email("Invalid email"),
@@ -31,23 +36,18 @@ function LoginPage() {
 
     const handleSubmit = async (values: ILogin) => {
         try {
+            if (!executeRecaptcha) {
+                //setBot(true);
+                alert("Ви бот :(");
+                return;
+            }
+            values.recaptchaToken = await executeRecaptcha();
+
             const result = await http_common.post<ILoginResult>(
                 "api/account/login",
                 values,
             );
-            const { data } = result;
-            const token = data.token;
-            http_common.defaults.headers.common["Authorization"]=`Bearer ${token}`;
-            localStorage.token = token;
-            const user = jwtDecode(token) as IUser;
-            dispatch({
-                type: AuthUserActionType.LOGIN_USER,
-                payload: {
-                    sub: user.sub,
-                    email: user.email,
-                    roles: user.roles,
-                },
-            });
+            LoginUserAction(dispatch, result.data.token);
             setMessage("");
             navigate("/");
         } catch {
@@ -94,6 +94,11 @@ function LoginPage() {
                             touched={touched.password}
                             handleChange={handleChange}
                         ></InputGroup>
+
+                        <GoogleOAuthProvider clientId={"415933673193-80hgknlq09c8g15av69ka777n6ngvolo.apps.googleusercontent.com"}>
+                            <GoogleAuth/>
+                        </GoogleOAuthProvider>
+
                         <button
                             type="submit"
                             className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"

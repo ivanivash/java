@@ -21,6 +21,10 @@ public class AccountController {
     @PostMapping("login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody LoginDto dto) {
         try {
+
+            var googleSecretKey = "6LctSFIoAAAAAAkT0xS6X6VknXkzp5RZBLPNtTHt";
+            //Перед перевіркою даних користувача відправити запит на гугл і переконатися, що гугл
+            //перевірив форму перед відправкою нам.
             var auth = service.login(dto);
             return ResponseEntity.ok(auth);
         }
@@ -29,10 +33,15 @@ public class AccountController {
         }
     }
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody RegisterDTO registrationRequest) {
+    public ResponseEntity<AuthResponseDto> register(@RequestBody RegisterDTO registrationRequest) {
         try {
             service.register(registrationRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            var auth = service.login(LoginDto
+                    .builder()
+                    .email(registrationRequest.getEmail())
+                    .password(registrationRequest.getPassword())
+                    .build());
+            return ResponseEntity.ok(auth);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
